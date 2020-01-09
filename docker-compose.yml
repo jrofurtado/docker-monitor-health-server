@@ -1,3 +1,4 @@
+#Create the "local-le.env" file with the variable DOMAIN set to your hostname
 version: '3'
 
 volumes:
@@ -44,12 +45,11 @@ services:
         -b"monitor,3000;;dns;redirect-if-not-tls"
         -b"auth,8080;/auth/;dns;redirect-if-not-tls"'
   le:
-    build: ../letsencrypt-with-healthcheck
-    image: jrofurtado/letsencrypt-with-healthcheck:lastest
+    image: jrofurtado/letsencrypt-with-healthcheck:1.0.0
     volumes: 
       - lb_data:/volume
+    env_file: local-le.env
     environment:
-      DOMAIN: jrofurtado-dev.duckdns.org
       CRONTAB_PERIOD: '1 0 2 * *'
   monitor:
     build: .

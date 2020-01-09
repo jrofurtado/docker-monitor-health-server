@@ -1,2 +1,3 @@
+local-*.env
 files/node_modules
 files/volume
