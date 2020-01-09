@@ -1,0 +1,65 @@
+version: '3'
+
+volumes:
+  db_data:
+    driver: local
+  lb_data:
+    driver: local
+
+services:
+  db:
+    image: jrofurtado/mysql-with-healthcheck:5.7.28
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth
+      MYSQL_USER: auth
+      MYSQL_PASSWORD: password
+  auth:
+    image: jrofurtado/keycloak-with-healthcheck:8.0.1
+    environment:
+      DB_VENDOR: MYSQL
+      DB_ADDR: db
+      DB_DATABASE: auth
+      DB_USER: auth
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: password
+      JDBC_PARAMS: "useSSL=false"
+    depends_on:
+      - db
+  lb:
+    ports:
+      - "80:80"
+      - "443:443"
+    image: jrofurtado/nghttpx-autoreload-with-healthcheck:1.0.0
+    volumes: 
+      - lb_data:/volume
+    environment:
+      PARAMS: '
+        -f"*,80;no-tls"
+        -f"*,443"
+        -b"le,80;/.well-known/acme-challenge/;dns;"
+        -b"monitor,3000;;dns;redirect-if-not-tls"
+        -b"auth,8080;/auth/;dns;redirect-if-not-tls"'
+  le:
+    build: ../letsencrypt-with-healthcheck
+    image: jrofurtado/letsencrypt-with-healthcheck:lastest
+    volumes: 
+      - lb_data:/volume
+    environment:
+      DOMAIN: jrofurtado-dev.duckdns.org
+      CRONTAB_PERIOD: '1 0 2 * *'
+  monitor:
+    build: .
+    image: jrofurtado/docker-monitor-health-server
+    environment: 
+      COLLECT_DAYS: 30
+      ADMIN_PASS: admin
+      KEYCLOAK_AUTH_SERVER_URL: "https://auth:8080/auth"
+      KEYCLOAK_REALM: "docker-monitor-health-server"
+      KEYCLOAK_RESOURCE: "docker-monitor-health-server"
+    depends_on: 
+      - auth
+      - lb
