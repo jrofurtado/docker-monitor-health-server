@@ -48,7 +48,7 @@ services:
     image: jrofurtado/letsencrypt-with-healthcheck:1.0.0
     volumes: 
       - lb_data:/volume
-    env_file: local-le.env
+    env_file: dev-le.env
     environment:
       CRONTAB_PERIOD: '1 0 2 * *'
   monitor:
