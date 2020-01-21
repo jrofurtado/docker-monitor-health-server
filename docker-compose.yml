@@ -6,6 +6,8 @@ volumes:
     driver: local
   lb_data:
     driver: local
+  server_data:
+    driver: local
 
 services:
   db:
@@ -51,7 +53,7 @@ services:
     env_file: dev-le.env
     environment:
       CRONTAB_PERIOD: '1 0 2 * *'
-  monitor:
+  server:
     build: .
     image: jrofurtado/docker-monitor-health-server
     environment: 
@@ -59,7 +61,9 @@ services:
       ADMIN_PASS: admin
       KEYCLOAK_AUTH_SERVER_URL: "https://auth:8080/auth"
       KEYCLOAK_REALM: "docker-monitor-health-server"
-      KEYCLOAK_RESOURCE: "docker-monitor-health-server"
+      KEYCLOAK_RESOURCE: "server"
+    volumes:
+      - server_data:/volume
     depends_on: 
       - auth
       - lb
