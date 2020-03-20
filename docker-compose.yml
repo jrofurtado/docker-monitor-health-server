@@ -4,12 +4,19 @@ version: '3'
 volumes:
   db_data:
     driver: local
-  lb_data:
-    driver: local
   server_data:
     driver: local
 
 services:
+  lb:
+    ports:
+      - "80:80"
+    image: jrofurtado/nghttpx-autoreload-with-healthcheck:1.0.0
+    environment:
+      PARAMS: "
+        -f\"*,80;no-tls\"
+        -b\"server,3000;;dns;\"
+        -b\"auth,8080;/auth/;dns;\""
   db:
     image: jrofurtado/mysql-with-healthcheck:5.7.28
     volumes:
@@ -21,7 +28,10 @@ services:
       MYSQL_PASSWORD: password
   auth:
     image: jrofurtado/keycloak-with-healthcheck:8.0.1
+    volumes:
+      - ./files/docker-monitor-health-server.json:/tmp/docker-monitor-health-server.json
     environment:
+      KEYCLOAK_IMPORT: /tmp/docker-monitor-health-server.json
       DB_VENDOR: MYSQL
       DB_ADDR: db
       DB_DATABASE: auth
@@ -30,36 +40,18 @@ services:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: password
       JDBC_PARAMS: "useSSL=false"
+      KEYCLOAK_LOGLEVEL: WARN
+      ROOT_LOGLEVEL: WARN
     depends_on:
       - db
-  lb:
-    ports:
-      - "80:80"
-      - "443:443"
-    image: jrofurtado/nghttpx-autoreload-with-healthcheck:1.0.0
-    volumes: 
-      - lb_data:/volume
-    environment:
-      PARAMS: '
-        -f"*,80;no-tls"
-        -f"*,443"
-        -b"le,80;/.well-known/acme-challenge/;dns;"
-        -b"monitor,3000;;dns;redirect-if-not-tls"
-        -b"auth,8080;/auth/;dns;redirect-if-not-tls"'
-  le:
-    image: jrofurtado/letsencrypt-with-healthcheck:1.0.0
-    volumes: 
-      - lb_data:/volume
-    env_file: dev-le.env
-    environment:
-      CRONTAB_PERIOD: '1 0 2 * *'
   server:
     build: .
     image: jrofurtado/docker-monitor-health-server
-    environment: 
+    environment:
+      DEFAULT_APPS: '{"monitor":"fab4d210-69db-11ea-8339-811ba1916331"}'
       COLLECT_DAYS: 30
       ADMIN_PASS: admin
-      KEYCLOAK_AUTH_SERVER_URL: "https://auth:8080/auth"
+      KEYCLOAK_AUTH_SERVER_URL: "http://${DOCKER_HOST:-172.17.0.1}/auth"
       KEYCLOAK_REALM: "docker-monitor-health-server"
       KEYCLOAK_RESOURCE: "server"
       KEYCLOAK_SSL_REQUIRED: "none"
@@ -68,3 +60,14 @@ services:
     depends_on: 
       - auth
       - lb
+  agent:
+    image: jrofurtado/docker-monitor-health-agent:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - KEY=fab4d210-69db-11ea-8339-811ba1916331
+      - DOCKER_API_VERSION=v1.40
+      - APP_NAME=monitor
+      - COLLECT_STATS=false
+      - MONITORING_URL=http://${DOCKER_HOST:-172.17.0.1}/api/message
+      - MONITORING_DELAY=30

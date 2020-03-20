@@ -165,6 +165,7 @@ function createHttpServer(apps) {
     "ssl-required": keycloakSslRequired,
     "resource": keycloakResource
   }
+  console.log("Keycloak config: " + JSON.stringify(config))
   let keycloak = new keycloakConnect({store: memoryStore}, config)
   expressApp.use(bodyParser.json())
   expressApp.use(keycloak.middleware({
