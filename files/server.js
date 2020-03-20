@@ -178,7 +178,7 @@ function createHttpServer(apps) {
   expressApp.post('/api/message', (req, res) => {
     receiveMessage(apps, req, res)
   })
-  expressApp.get('/api/apps', keycloak.protect('realm:admin'), (req, res) => {
+  expressApp.get('/api/apps', keycloak.protect('realm:user'), (req, res) => {
     readApps(apps, req, res)
   })
   expressApp.get('/api/app', keycloak.protect('realm:admin'), (req, res) => {
