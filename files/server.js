@@ -14,6 +14,7 @@ const collectDays = process.env.COLLECT_DAYS
 const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
 const keycloakRealm = process.env.KEYCLOAK_REALM
 const keycloakResource = process.env.KEYCLOAK_RESOURCE
+const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
 function readApps(apps, req, res) {
   let myApps = []
@@ -161,7 +162,7 @@ function createHttpServer(apps) {
     "realm": keycloakRealm,
     "bearer-only": true,
     "auth-server-url": keycloakAuthServerUrl,
-    "ssl-required": "external",
+    "ssl-required": keycloakSslRequired,
     "resource": keycloakResource
   }
   let keycloak = new keycloakConnect({store: memoryStore}, config)

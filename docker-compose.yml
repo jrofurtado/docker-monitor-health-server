@@ -62,6 +62,7 @@ services:
       KEYCLOAK_AUTH_SERVER_URL: "https://auth:8080/auth"
       KEYCLOAK_REALM: "docker-monitor-health-server"
       KEYCLOAK_RESOURCE: "server"
+      KEYCLOAK_SSL_REQUIRED: "none"
     volumes:
       - server_data:/volume
     depends_on: 

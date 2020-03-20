@@ -8,3 +8,4 @@ Check [docker-compose.yml](docker-compose.yml)
 * KEYCLOAK_AUTH_SERVER_URL: Keycloak auth url
 * KEYCLOAK_REALM: default "docker-monitor-health-server"
 * KEYCLOAK_RESOURCE: default "server". Keycloak client
+* KEYCLOAK_SSL_REQUIRED: default "external". Keycloak attribute ssl-required. Valid values are "all", "external" and "none"

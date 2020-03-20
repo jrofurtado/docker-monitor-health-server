@@ -5,6 +5,7 @@ export COLLECT_DAYS=30
 export KEYCLOAK_AUTH_SERVER_URL="http://localhost:8080/auth"
 export KEYCLOAK_REALM="docker-monitor-health-server"
 export KEYCLOAK_RESOURCE="server"
+export KEYCLOAK_SSL_REQUIRED="none"
 
 rm -rf volume/* && mkdir -p volume/status && echo "{\"app1\": \"key1\"}" > volume/apps.json && echo "{}" > volume/status/last
 
