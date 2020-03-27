@@ -17,7 +17,7 @@ const keycloakResource = process.env.KEYCLOAK_RESOURCE
 const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
 function readApps(apps, req, res) {
-  let myApps = []
+  let myApps = {}
   for (let app in apps) {
     let dir = 'volume/server/' + app
     let servers = []
