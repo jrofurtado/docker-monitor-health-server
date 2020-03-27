@@ -19,7 +19,13 @@ const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 function readApps(apps, req, res) {
   let myApps = []
   for (let app in apps) {
-    myApps.push(app)
+    let dir = 'volume/server/' + app
+    let servers = []
+    try {
+      servers = fs.readdirSync(dir)
+    } catch (error) {
+    }
+    myApps[app] = servers
   }
   res.json(myApps)
 }
