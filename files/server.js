@@ -98,16 +98,16 @@ function getInterval(baseDir, from, to) {
       last = i
     }
   }
-  if(first == -1) {
+  if (first == -1) {
     first = 0
   }
-  if(last == -1) {
+  if (last == -1) {
     last = 0
   }
-  if(first == -2) {
+  if (first == -2) {
     first = filesNumeric.length - 1
   }
-  if(last == -2) {
+  if (last == -2) {
     last = filesNumeric.length - 1
   }
   for (let i = first; i <= last; i++) {
@@ -164,15 +164,25 @@ function createHttpServer(apps) {
     saveUninitialized: true,
     store: memoryStore
   }))
-  let config = {
-    "realm": keycloakRealm,
+  // let config = {
+  //   "realm": keycloakRealm,
+  //   "bearer-only": true,
+  //   "auth-server-url": keycloakAuthServerUrl,
+  //   "ssl-required": keycloakSslRequired,
+  //   "resource": keycloakResource
+  // }
+
+  const config = {
+    "realm": "docker-monitor-health-server",
     "bearer-only": true,
-    "auth-server-url": keycloakAuthServerUrl,
-    "ssl-required": keycloakSslRequired,
-    "resource": keycloakResource
+    "auth-server-url": "https://globaleda-id.duckdns.org/auth/",
+    "ssl-required": "external",
+    "resource": "server",
+    "confidential-port": 0
   }
+
   console.log("Keycloak config: " + JSON.stringify(config))
-  let keycloak = new keycloakConnect({store: memoryStore}, config)
+  let keycloak = new keycloakConnect({ store: memoryStore }, config)
   expressApp.use(bodyParser.json())
   expressApp.use(keycloak.middleware({
     logout: '/logout',
