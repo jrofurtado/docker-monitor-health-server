@@ -120,6 +120,9 @@ function getInterval(baseDir, from, to) {
 function readLastMessage(apps, req, res) {
   let appName = req.query.appName
   let serverName = req.query.serverName
+  console.log('readLastMessage')
+  console.log('appName', appName)
+  console.log('serverName', serverName)
   if (!appName || !serverName) {
     res.sendStatus(400)
   } else {
