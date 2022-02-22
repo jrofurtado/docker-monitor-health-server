@@ -178,7 +178,8 @@ function createHttpServer(apps) {
     "auth-server-url": "https://globaleda-id.duckdns.org/auth/",
     "ssl-required": "external",
     "resource": "server",
-    "confidential-port": 0
+    "confidential-port": 0,
+    "use-resource-role-mappings": true
   }
 
   console.log("Keycloak config: " + JSON.stringify(config))
