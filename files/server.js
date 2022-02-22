@@ -120,9 +120,6 @@ function getInterval(baseDir, from, to) {
 function readLastMessage(apps, req, res) {
   let appName = req.query.appName
   let serverName = req.query.serverName
-  console.log('readLastMessage')
-  console.log('appName', appName)
-  console.log('serverName', serverName)
   if (!appName || !serverName) {
     res.sendStatus(400)
   } else {
@@ -144,6 +141,7 @@ function readIntervalMessage(apps, req, res) {
 }
 
 function readLastStatus(apps, req, res) {
+  console.log('readLastStatus')
   res.json(JSON.parse(fs.readFileSync('volume/status/last')))
 }
 
@@ -216,16 +214,16 @@ function createHttpServer(apps) {
   expressApp.delete('/api/server', keycloak.protect('realm:admin'), (req, res) => {
     removeServer(apps, req, res)
   })
-  // expressApp.get('/api/message/readLast', keycloak.protect('realm:user'), (req, res) => {
-  //   readLastMessage(apps, req, res)
-  // })
-  expressApp.get('/api/message/readLast', (req, res) => {
+  expressApp.get('/api/message/readLast', keycloak.protect('realm:user'), (req, res) => {
     readLastMessage(apps, req, res)
   })
   expressApp.get('/api/message/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalMessage(apps, req, res)
   })
-  expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
+  // expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
+  //   readLastStatus(apps, req, res)
+  // })
+  expressApp.get('/api/status/readLast', (req, res) => {
     readLastStatus(apps, req, res)
   })
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
