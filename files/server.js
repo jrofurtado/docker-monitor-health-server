@@ -213,16 +213,16 @@ function createHttpServer(apps) {
   expressApp.delete('/api/server', keycloak.protect('realm:admin'), (req, res) => {
     removeServer(apps, req, res)
   })
-  expressApp.get('/api/message/readLast', keycloak.protect('realm:user'), (req, res) => {
+  // expressApp.get('/api/message/readLast', keycloak.protect('realm:user'), (req, res) => {
+  //   readLastMessage(apps, req, res)
+  // })
+  expressApp.get('/api/message/readLast', (req, res) => {
     readLastMessage(apps, req, res)
   })
   expressApp.get('/api/message/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalMessage(apps, req, res)
   })
-  // expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
-  //   readLastStatus(apps, req, res)
-  // })
-  expressApp.get('/api/status/readLast', keycloak.protect(), (req, res) => {
+  expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
     readLastStatus(apps, req, res)
   })
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
