@@ -219,7 +219,10 @@ function createHttpServer(apps) {
   expressApp.get('/api/message/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalMessage(apps, req, res)
   })
-  expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
+  // expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
+  //   readLastStatus(apps, req, res)
+  // })
+  expressApp.get('/api/status/readLast', keycloak.protect(), (req, res) => {
     readLastStatus(apps, req, res)
   })
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
