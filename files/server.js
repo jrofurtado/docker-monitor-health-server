@@ -16,6 +16,8 @@ const keycloakRealm = process.env.KEYCLOAK_REALM
 const keycloakResource = process.env.KEYCLOAK_RESOURCE
 const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0
+
 function readApps(apps, req, res) {
   let myApps = {}
   for (let app in apps) {
