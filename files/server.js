@@ -16,8 +16,6 @@ const keycloakRealm = process.env.KEYCLOAK_REALM
 const keycloakResource = process.env.KEYCLOAK_RESOURCE
 const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0
-
 function readApps(apps, req, res) {
   let myApps = {}
   for (let app in apps) {
@@ -166,23 +164,26 @@ function createHttpServer(apps) {
     saveUninitialized: true,
     store: memoryStore
   }))
-  // let config = {
-  //   "realm": keycloakRealm,
-  //   "bearer-only": true,
-  //   "auth-server-url": keycloakAuthServerUrl,
-  //   "ssl-required": keycloakSslRequired,
-  //   "resource": keycloakResource
-  // }
 
-  const config = {
-    "realm": "docker-monitor-health-server",
+  let config = {
+    "realm": keycloakRealm,
     "bearer-only": true,
-    "auth-server-url": "https://globaleda-id.duckdns.org/auth/",
-    "ssl-required": "external",
-    "resource": "server",
-    "confidential-port": 0,
-    "use-resource-role-mappings": true
+    "auth-server-url": keycloakAuthServerUrl,
+    "ssl-required": keycloakSslRequired,
+    "resource": keycloakResource
   }
+
+  process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0
+
+  // const config = {
+  //   "realm": "docker-monitor-health-server",
+  //   "bearer-only": true,
+  //   "auth-server-url": "https://globaleda-id.duckdns.org/auth/",
+  //   "ssl-required": "external",
+  //   "resource": "server",
+  //   "confidential-port": 0,
+  //   "use-resource-role-mappings": true
+  // }
 
   console.log("Keycloak config: " + JSON.stringify(config))
   let keycloak = new keycloakConnect({ store: memoryStore }, config)
