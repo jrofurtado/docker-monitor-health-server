@@ -229,6 +229,15 @@ function createHttpServer(apps) {
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalStatus(apps, req, res)
   })
+  expressApp.get('/api/users', keycloak.protect('realm:admin'), (req, res) => {
+    readUsers(req, res)
+  })
+  expressApp.post('/api/user', keycloak.protect('realm:admin'), (req, res) => {
+    addUser(req, res)
+  })
+  expressApp.delete('/api/user', keycloak.protect('realm:admin'), (req, res) => {
+    removeUser(req, res)
+  })
   expressApp.listen(3000, () => {
     console.log('Started at port 3000')
   })
@@ -333,6 +342,40 @@ function checkChanges(apps, appStatus) {
     console.log(notHealty)
   }
   return newAppStatus
+}
+
+function readUsers(req, res) {
+  try {
+    let users = JSON.parse(fs.readFileSync('volume/users.json'))
+    res.json(users)
+  } catch (error) {
+    res.json({})
+  }
+}
+
+function addUser(req, res) {
+  let key = uuidv1()
+  let myUsers = {}
+  try {
+    myUsers = JSON.parse(fs.readFileSync('volume/users.json'))
+  } catch (error) {
+    myUsers = {}
+  }
+  myUsers[req.query.username] = key
+  fs.writeFileSync('volume/users.json', JSON.stringify(myUsers))
+  res.json({ key: key })
+}
+
+function removeUser(req, res) {
+  let myUsers = {}
+  try {
+    myUsers = JSON.parse(fs.readFileSync('volume/users.json'))
+  } catch (error) {
+    myUsers = {}
+  }
+  delete myUsers[req.query.username]
+  fs.writeFileSync('volume/users.json', JSON.stringify(myUsers))
+  res.sendStatus(200)
 }
 
 function main() {
