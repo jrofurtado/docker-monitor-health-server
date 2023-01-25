@@ -46,7 +46,8 @@ services:
       - db
   server:
     build: .
-    image: jrofurtado/docker-monitor-health-server
+    # image: jrofurtado/docker-monitor-health-server
+    image: registry.gitlab.com/globaleda.pt/infraestrutura-desenvolvimento/docker-monitor-health-server:latest
     environment:
       DEFAULT_APPS: '{"monitor":"fab4d210-69db-11ea-8339-811ba1916331"}'
       COLLECT_DAYS: 30

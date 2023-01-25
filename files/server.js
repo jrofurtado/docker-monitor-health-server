@@ -238,8 +238,30 @@ function createHttpServer(apps) {
   expressApp.delete('/api/user', keycloak.protect('realm:admin'), (req, res) => {
     removeUser(req, res)
   })
+  // read usersApps
+  expressApp.get('/api/usersApps', keycloak.protect('realm:user'), (req, res) => {
+    readUsersApps(req, res)
+  })
+  // read user apps
+  expressApp.get('/api/userApps', keycloak.protect('realm:user'), (req, res) => {
+    readUserApps(req, res)
+  })
+  // add userApp
+  expressApp.post('/api/userApp', keycloak.protect('realm:admin'), (req, res) => {
+    addUserApp(req, res)
+  })
+  // remove userApp
+  expressApp.delete('/api/userApp', keycloak.protect('realm:admin'), (req, res) => {
+    removeUserApp(req, res)
+  })
+  // read app users
+  expressApp.get('/api/appUsers', keycloak.protect('realm:user'), (req, res) => {
+    readAppUsers(req, res)
+  })
+
   expressApp.listen(3000, () => {
     console.log('Started at port 3000')
+    console.log('novo build')
   })
 }
 
@@ -377,6 +399,92 @@ function removeUser(req, res) {
   fs.writeFileSync('volume/users.json', JSON.stringify(myUsers))
   res.sendStatus(200)
 }
+
+// users and apps
+function readUsersApps(req, res) {
+  let myUsersApps = {}
+  try {
+    myUsersApps = JSON.parse(fs.readFileSync('volume/usersApps.json'))
+  } catch (error) {
+    myUsersApps = {}
+  }
+  res.json(myUsersApps)
+}
+
+// read user apps
+function readUserApps(req, res) {
+  let myUsersApps = {}
+  try {
+    myUsersApps = JSON.parse(fs.readFileSync('volume/usersApps.json'))
+  } catch (error) {
+    myUsersApps = {}
+  }
+  let username = req.query.username
+  let myUserApps = myUsersApps[username]
+  if (!myUserApps) {
+    myUserApps = []
+  }
+  res.json(myUserApps)
+}
+
+function addUserApp(req, res) {
+  let myUsersApps = {}
+  try {
+    myUsersApps = JSON.parse(fs.readFileSync('volume/usersApps.json'))
+  } catch (error) {
+    myUsersApps = {}
+  }
+  let username = req.query.username
+  let appName = req.query.appName
+  let myUserApps = myUsersApps[username]
+  if (!myUserApps) {
+    myUserApps = []
+  }
+  myUserApps.push(appName)
+  myUsersApps[username] = myUserApps
+  fs.writeFileSync('volume/usersApps.json', JSON.stringify(myUsersApps))
+  res.sendStatus(200)
+}
+
+function removeUserApp(req, res) {
+  let myUsersApps = {}
+  try {
+    myUsersApps = JSON.parse(fs.readFileSync('volume/usersApps.json'))
+  } catch (error) {
+    myUsersApps = {}
+  }
+  let username = req.query.username
+  let appName = req.query.appName
+  let myUserApps = myUsersApps[username]
+  if (!myUserApps) {
+    myUserApps = []
+  }
+  myUserApps = myUserApps.filter(i => i != appName)
+  myUsersApps[username] = myUserApps
+  fs.writeFileSync('volume/usersApps.json', JSON.stringify(myUsersApps))
+  res.sendStatus(200)
+}
+
+// read app users
+function readAppUsers(req, res) {
+  let myUsersApps = {}
+  try {
+    myUsersApps = JSON.parse(fs.readFileSync('volume/usersApps.json'))
+  } catch (error) {
+    myUsersApps = {}
+  }
+  let appName = req.query.appName
+  let myAppUsers = []
+  Object.keys(myUsersApps).forEach(i => {
+    if (myUsersApps[i].indexOf(appName) != -1) {
+      myAppUsers.push(i)
+    }
+  })
+  res.json(myAppUsers)
+}
+
+// read attributes from keycloak role
+
 
 function main() {
   removeAllOldFiles()
