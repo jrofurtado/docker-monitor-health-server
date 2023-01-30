@@ -18,7 +18,9 @@ const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
 function readApps(apps, req, res) {
   let myApps = {}
+  console.log('apps', apps)
   for (let app in apps) {
+    console.log('app', app)
     let dir = 'volume/server/' + app
     let servers = []
     try {
@@ -28,6 +30,30 @@ function readApps(apps, req, res) {
     myApps[app] = servers
   }
   res.json(myApps)
+}
+
+function readRoleApps(apps, roleApps, req, res) {
+  let myApps = {}
+  for (let app in apps) {
+    //check if app is in roleApps
+    if (roleApps.indexOf(app) > -1) {
+      let dir = 'volume/server/' + app
+      let servers = []
+      try {
+        servers = fs.readdirSync(dir)
+      } catch (error) {
+      }
+      myApps[app] = servers
+    }
+  }
+  res.json(myApps)
+}
+
+function getAppsAllowed(req) {
+  let roles = req.kauth.grant.access_token.content.realm_access.roles
+  roles = roles.filter(role => role.startsWith('_'))
+  roles = roles.map(role => role.slice(1))
+  return roles
 }
 
 function readApp(apps, req, res) {
@@ -141,8 +167,17 @@ function readIntervalMessage(apps, req, res) {
 }
 
 function readLastStatus(apps, req, res) {
-  console.log('readLastStatus')
-  res.json(JSON.parse(fs.readFileSync('volume/status/last')))
+  console.log('rls - apps', apps)
+  let lastApps = JSON.parse(fs.readFileSync('volume/status/last'))
+  let userApps = getAppsAllowed(req)
+  let appsFiltered = {}
+  for (let app in userApps) {
+    const appName = userApps[app]
+    if (lastApps[appName]) {
+      appsFiltered[appName] = lastApps[appName]
+    }
+  }
+  res.json(appsFiltered)
 }
 
 function readIntervalStatus(apps, req, res) {
@@ -152,6 +187,17 @@ function readIntervalStatus(apps, req, res) {
     res.sendStatus(400)
   } else {
     let result = getInterval('volume/status', from, to)
+    res.json(result)
+  }
+}
+
+function readIntervalStatusFixedCount(apps, req, res) {
+  let from = req.query.from
+  let count= req.query.count
+  if (!from || !count) {
+    res.sendStatus(400)
+  } else {
+    let result = getInterval('volume/status', from, from + count)
     res.json(result)
   }
 }
@@ -189,10 +235,12 @@ function createHttpServer(apps) {
   console.log("Keycloak config: " + JSON.stringify(config))
   let keycloak = new keycloakConnect({ store: memoryStore }, config)
   expressApp.use(bodyParser.json())
+
   expressApp.use(keycloak.middleware({
     logout: '/logout',
     admin: '/'
   }))
+
   expressApp.get('/api/ping', (req, res) => {
     res.sendStatus(200)
   })
@@ -223,40 +271,8 @@ function createHttpServer(apps) {
   expressApp.get('/api/status/readLast', keycloak.protect('realm:user'), (req, res) => {
     readLastStatus(apps, req, res)
   })
-  // expressApp.get('/api/status/readLast', keycloak.protect(), (req, res) => {
-  //   readLastStatus(apps, req, res)
-  // })
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalStatus(apps, req, res)
-  })
-  expressApp.get('/api/users', keycloak.protect('realm:admin'), (req, res) => {
-    readUsers(req, res)
-  })
-  expressApp.post('/api/user', keycloak.protect('realm:admin'), (req, res) => {
-    addUser(req, res)
-  })
-  expressApp.delete('/api/user', keycloak.protect('realm:admin'), (req, res) => {
-    removeUser(req, res)
-  })
-  // read usersApps
-  expressApp.get('/api/usersApps', keycloak.protect('realm:user'), (req, res) => {
-    readUsersApps(req, res)
-  })
-  // read user apps
-  expressApp.get('/api/userApps', keycloak.protect('realm:user'), (req, res) => {
-    readUserApps(req, res)
-  })
-  // add userApp
-  expressApp.post('/api/userApp', keycloak.protect('realm:admin'), (req, res) => {
-    addUserApp(req, res)
-  })
-  // remove userApp
-  expressApp.delete('/api/userApp', keycloak.protect('realm:admin'), (req, res) => {
-    removeUserApp(req, res)
-  })
-  // read app users
-  expressApp.get('/api/appUsers', keycloak.protect('realm:user'), (req, res) => {
-    readAppUsers(req, res)
   })
 
   expressApp.listen(3000, () => {
