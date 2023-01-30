@@ -56,6 +56,8 @@ services:
       KEYCLOAK_REALM: "docker-monitor-health-server"
       KEYCLOAK_RESOURCE: "server"
       KEYCLOAK_SSL_REQUIRED: "none"
+      EMAIL_USER: "user"
+      EMAIL_PASSWORD: "pass"
     volumes:
       - server_data:/volume
     depends_on: 
