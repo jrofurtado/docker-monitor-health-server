@@ -56,6 +56,54 @@ function getAppsAllowed(req) {
   return roles
 }
 
+
+/**
+ * Function to send email with nodemailer
+ * The parameter is an object with the following properties:
+ * 
+ * - appName    -> Name of the application
+ * - serverName -> Name of the server
+ * - info       -> Information about the alert
+ * 
+ * @param {object} data 
+ */
+function sendEmail(data) {
+
+  let subject = 'Alerta! dokerMon'
+  let body    = ```
+                 Caro administrador do sistema,</br> 
+                 foi despoltado um alerta com origem no container:
+                 <b>${data.appName}</b></br></br>
+                 No servidor:</br> 
+                 <b>${data.serverName}</b></br></br> 
+                 Contendo a seguinte informação:</br>
+                 <b>${data.info}</b> 
+                ```
+  const nodemailer = require('nodemailer')
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  })
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_TO,
+    subject: subject,
+    text: body
+  }
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log('Email sent: ' + info.response)
+    }
+  })
+}
+
 function readApp(apps, req, res) {
   key = apps[req.query.appName]
   if (key) {
