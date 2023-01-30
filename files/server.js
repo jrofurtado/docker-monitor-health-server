@@ -1,20 +1,23 @@
-const express = require('express')
-const expressSession = require('express-session')
+const express         = require('express')
+const expressSession  = require('express-session')
 const keycloakConnect = require('keycloak-connect')
-const bodyParser = require('body-parser')
-const schedule = require('node-schedule')
-const http = require('http')
-const fs = require('fs-extra')
-const path = require('path')
-const uuidv1 = require('uuid/v1')
-const deepEqual = require('deep-equal')
-const jsonDiff = require('json-diff')
+const bodyParser      = require('body-parser')
+const schedule        = require('node-schedule')
+const http            = require('http')
+const fs              = require('fs-extra')
+const path            = require('path')
+const uuidv1          = require('uuid/v1')
+const deepEqual       = require('deep-equal')
+const jsonDiff        = require('json-diff')
 
-const collectDays = process.env.COLLECT_DAYS
+const collectDays           = process.env.COLLECT_DAYS
 const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
-const keycloakRealm = process.env.KEYCLOAK_REALM
-const keycloakResource = process.env.KEYCLOAK_RESOURCE
-const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
+const keycloakRealm         = process.env.KEYCLOAK_REALM
+const keycloakResource      = process.env.KEYCLOAK_RESOURCE
+const keycloakSslRequired   = process.env.KEYCLOAK_SSL_REQUIRED
+
+const emailUser     = process.env.EMAIL_USER
+const emailPassword = process.env.EMAIL_PASSWORD
 
 function readApps(apps, req, res) {
   let myApps = {}
@@ -84,13 +87,13 @@ function sendEmail(data) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
+      user: emailUser,
+      pass: emailPassword
     }
   })
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: emailUser,
     to: data.destination,
     subject: subject,
     html: body
