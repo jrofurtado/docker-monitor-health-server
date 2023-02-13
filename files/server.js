@@ -1,22 +1,25 @@
-const express = require('express')
-const expressSession = require('express-session')
+const express         = require('express')
+const expressSession  = require('express-session')
 const keycloakConnect = require('keycloak-connect')
-const bodyParser = require('body-parser')
-const schedule = require('node-schedule')
-const http = require('http')
-const fs = require('fs-extra')
-const path = require('path')
-const uuidv1 = require('uuid/v1')
-const deepEqual = require('deep-equal')
-const jsonDiff = require('json-diff')
-
-const collectDays = process.env.COLLECT_DAYS
-const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
-const keycloakRealm = process.env.KEYCLOAK_REALM
-const keycloakResource = process.env.KEYCLOAK_RESOURCE
-const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
+const bodyParser      = require('body-parser')
+const schedule        = require('node-schedule')
+const http            = require('http')
+const fs              = require('fs-extra')
+const path            = require('path')
+const uuidv1          = require('uuid/v1')
+const deepEqual       = require('deep-equal')
+const jsonDiff        = require('json-diff')
 const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
 
+const collectDays           = process.env.COLLECT_DAYS
+const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
+
+const keycloakRealm         = process.env.KEYCLOAK_REALM
+const keycloakResource      = process.env.KEYCLOAK_RESOURCE
+const keycloakSslRequired   = process.env.KEYCLOAK_SSL_REQUIRED
+
+const emailUser     = process.env.EMAIL_USER
+const emailPassword = process.env.EMAIL_PASSWORD
 
 function readApps(apps, req, res) {
   let myApps = {}
@@ -58,6 +61,57 @@ function getAppsAllowed(req) {
   return roles
 }
 
+/**
+ * Function to send email
+ * The parameter is an object with the following properties:
+ * 
+ * - appName    -> Name of the application
+ * - serverName -> Name of the server
+ * - info       -> Information about the alert
+ * - destination-> Email address to send the alert
+ * 
+ * @param {object} data 
+ */
+function sendEmail(data) {
+
+  let subject = 'Alerta! dockerMon...'
+  let body    = ```
+                 Caro administrador do sistema.<br><br>
+                 Foi despoltado um alerta com origem no container:
+                 <b>${data.appName}</b></br></br>
+                 No servidor:</br> 
+                 <b>${data.serverName}</b></br></br> 
+                 Contendo a seguinte informação:</br>
+                 <b>${data.info}</b> 
+                ```
+  const nodemailer = require('nodemailer')
+ 
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: emailUser,
+      pass: emailPassword
+    }
+  })
+
+  const mailOptions = {
+    from: emailUser,
+    to: data.destination,
+    subject: subject,
+    html: body
+  }
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log('Email enviado com sucesso: ' + info.response)
+    }
+  })
+}
+
+
+
 function readApp(apps, req, res) {
   key = apps[req.query.appName]
   if (key) {
@@ -66,6 +120,7 @@ function readApp(apps, req, res) {
     res.sendStatus(404)
   }
 }
+
 
 function addApp(apps, req, res) {
   let key = uuidv1()
