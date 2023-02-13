@@ -15,6 +15,8 @@ const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
 const keycloakRealm = process.env.KEYCLOAK_REALM
 const keycloakResource = process.env.KEYCLOAK_RESOURCE
 const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
+const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
+
 
 function readApps(apps, req, res) {
   let myApps = {}
@@ -107,42 +109,6 @@ function receiveMessage(apps, req, res) {
   }
 }
 
-function getInterval(baseDir, from, to) {
-  let result = []
-  let files = fs.readdirSync(baseDir)
-  files.splice(files.indexOf('last'), 1)
-  let filesNumeric = files.map(Number)
-  filesNumeric.sort()
-  let first = -2
-  let last = -2
-  for (let i = 0; i < filesNumeric.length; i++) {
-    let file = filesNumeric[i]
-    if (first == -2 && file > from) {
-      first = i - 1
-    }
-    if (last == -2 && file >= to) {
-      last = i
-    }
-  }
-  if (first == -1) {
-    first = 0
-  }
-  if (last == -1) {
-    last = 0
-  }
-  if (first == -2) {
-    first = filesNumeric.length - 1
-  }
-  if (last == -2) {
-    last = filesNumeric.length - 1
-  }
-  for (let i = first; i <= last; i++) {
-    let file = baseDir + '/' + filesNumeric[i]
-    result.push(JSON.parse(fs.readFileSync(file)))
-  }
-  return result
-}
-
 function readLastMessage(apps, req, res) {
   let appName = req.query.appName
   let serverName = req.query.serverName
@@ -193,11 +159,11 @@ function readIntervalStatus(apps, req, res) {
 
 function readIntervalStatusFixedCount(apps, req, res) {
   let from = req.query.from
-  let count= req.query.count
+  let count = req.query.count
   if (!from || !count) {
     res.sendStatus(400)
   } else {
-    let result = getInterval('volume/status', from, from + count)
+    let result = getIntervalFromCount('volume/status', from, count)
     res.json(result)
   }
 }
@@ -273,6 +239,9 @@ function createHttpServer(apps) {
   })
   expressApp.get('/api/status/readInterval', keycloak.protect('realm:user'), (req, res) => {
     readIntervalStatus(apps, req, res)
+  })
+  expressApp.get('/api/status/readIntervalFixedCount', keycloak.protect('realm:user'), (req, res) => {
+    readIntervalStatusFixedCount(apps, req, res)
   })
 
   expressApp.listen(3000, () => {
