@@ -14,7 +14,7 @@
         "express-session": "^1.17.0",
         "fs-extra": "^8.1.0",
         "json-diff": "^0.5.4",
-        "keycloak-connect": "^8.0.1",
+        "keycloak-connect": "^21.0.1",
         "node-schedule": "^1.3.2",
         "nodemailer": "^6.4.2",
         "uuid": "^3.3.3"
