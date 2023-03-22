@@ -1,24 +1,24 @@
-const express         = require('express')
-const expressSession  = require('express-session')
+const express = require('express')
+const expressSession = require('express-session')
 const keycloakConnect = require('keycloak-connect')
-const bodyParser      = require('body-parser')
-const schedule        = require('node-schedule')
-const http            = require('http')
-const fs              = require('fs-extra')
-const path            = require('path')
-const uuidv1          = require('uuid/v1')
-const deepEqual       = require('deep-equal')
-const jsonDiff        = require('json-diff')
+const bodyParser = require('body-parser')
+const schedule = require('node-schedule')
+const http = require('http')
+const fs = require('fs-extra')
+const path = require('path')
+const uuidv1 = require('uuid/v1')
+const deepEqual = require('deep-equal')
+const jsonDiff = require('json-diff')
 const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
 
-const collectDays           = process.env.COLLECT_DAYS
+const collectDays = process.env.COLLECT_DAYS
 const keycloakAuthServerUrl = process.env.KEYCLOAK_AUTH_SERVER_URL
 
-const keycloakRealm         = process.env.KEYCLOAK_REALM
-const keycloakResource      = process.env.KEYCLOAK_RESOURCE
-const keycloakSslRequired   = process.env.KEYCLOAK_SSL_REQUIRED
+const keycloakRealm = process.env.KEYCLOAK_REALM
+const keycloakResource = process.env.KEYCLOAK_RESOURCE
+const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
-const emailUser     = process.env.EMAIL_USER
+const emailUser = process.env.EMAIL_USER
 const emailPassword = process.env.EMAIL_PASSWORD
 
 function readApps(apps, req, res) {
@@ -75,7 +75,7 @@ function getAppsAllowed(req) {
 function sendEmail(data) {
 
   let subject = 'Alerta! dockerMon...'
-  let body    = ```
+  let body = ```
                  Caro administrador do sistema.<br><br>
                  Foi despoltado um alerta com origem no container:
                  <b>${data.appName}</b></br></br>
@@ -85,7 +85,7 @@ function sendEmail(data) {
                  <b>${data.info}</b> 
                 ```
   const nodemailer = require('nodemailer')
- 
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -314,11 +314,11 @@ function errorCallback(message, error) {
 function removeAllOldFiles() {
   let expired = new Date().getTime() - (collectDays * 24 * 60 * 60 * 1000)
   let baseDir = 'volume/server'
-  fs.readdir(baseDir, (err, appDirs) => {
+  fs.readdirSync(baseDir, (err, appDirs) => {
     if (appDirs) {
       for (let i = 0; i < appDirs.length; i++) {
         let appDir = baseDir + '/' + appDirs[i]
-        fs.readdir(appDir, (err, serverDirs) => {
+        fs.readdirSync(appDir, (err, serverDirs) => {
           if (serverDirs) {
             for (let j = 0; j < serverDirs.length; j++) {
               let serverDir = appDir + '/' + serverDirs[j]
@@ -333,7 +333,7 @@ function removeAllOldFiles() {
 }
 
 function removeOldFiles(expired, dir) {
-  fs.readdir(dir, (err, files) => {
+  fs.readdirSync(dir, (err, files) => {
     if (files) {
       for (let k = 0; k < files.length; k++) {
         let file = files[k]
@@ -388,7 +388,7 @@ function checkChanges(apps, appStatus) {
           if (!notHealty[i]) {
             notHealty[i] = [j]
           } else {
-            notHealty.i.push(j)
+            notHealty[i].push(j)
           }
         }
       })
