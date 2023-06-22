@@ -1,7 +1,7 @@
-FROM node:8.17.0-alpine3.10
+FROM node:20.3-bullseye-slim
 
-CMD /entrypoint.sh
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD node /healthcheck.js
+WORKDIR /app
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD node ./healthcheck.js
 RUN mkdir /volume
 
 ENV DEFAULT_APPS={}
@@ -11,5 +11,8 @@ ENV KEYCLOAK_REALM="docker-monitor-health-server"
 ENV KEYCLOAK_RESOURCE="server"
 ENV KEYCLOAK_SSL_REQUIRED="external"
 
-COPY files/ /
+
+COPY files/ /app/
 RUN npm install
+
+ENTRYPOINT /app/entrypoint.sh

@@ -5,10 +5,15 @@ const bodyParser = require('body-parser')
 const schedule = require('node-schedule')
 const http = require('http')
 const fs = require('fs-extra')
-const path = require('path')
-const uuidv1 = require('uuid/v1')
-const deepEqual = require('deep-equal')
+const deepEqual = require('fast-deep-equal')
 const jsonDiff = require('json-diff')
+//const dotenv = require('dotenv')
+const cors = require('cors')
+const webpush = require('web-push')
+const { v1: uuidv1 } = require('uuid');
+require('dotenv').config()
+
+
 const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
 
 const collectDays = process.env.COLLECT_DAYS
@@ -21,12 +26,19 @@ const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 const emailUser = process.env.EMAIL_USER
 const emailPassword = process.env.EMAIL_PASSWORD
 
+
+
+
+
+webpush.setVapidDetails(process.env.WEB_PUSH_CONTACT, process.env.WEB_PUSH_PUBLIC_VAPID_KEY, process.env.WEB_PUSH_PRIVATE_VAPID_KEY)
+
+
 function readApps(apps, req, res) {
   let myApps = {}
   console.log('apps', apps)
   for (let app in apps) {
     console.log('app', app)
-    let dir = 'volume/server/' + app
+    let dir = '/volume/server/' + app
     let servers = []
     try {
       servers = fs.readdirSync(dir)
@@ -42,7 +54,7 @@ function readRoleApps(apps, roleApps, req, res) {
   for (let app in apps) {
     //check if app is in roleApps
     if (roleApps.indexOf(app) > -1) {
-      let dir = 'volume/server/' + app
+      let dir = '/volume/server/' + app
       let servers = []
       try {
         servers = fs.readdirSync(dir)
@@ -123,15 +135,15 @@ function readApp(apps, req, res) {
 
 
 function addApp(apps, req, res) {
-  let key = uuidv1()
+  let key = uuidv1();
   apps[req.query.appName] = key
-  fs.writeFileSync('volume/apps.json', JSON.stringify(apps))
+  fs.writeFileSync('/volume/apps.json', JSON.stringify(apps))
   res.json({ key: key })
 }
 
 function removeApp(apps, req, res) {
   delete apps[req.query.appName]
-  fs.writeFileSync('volume/apps.json', JSON.stringify(apps))
+  fs.writeFileSync('/volume/apps.json', JSON.stringify(apps))
   res.sendStatus(200)
 }
 
@@ -141,7 +153,7 @@ function removeServer(apps, req, res) {
   if (!appName || !serverName) {
     res.sendStatus(400)
   } else {
-    let dir = 'volume/server/' + appName + '/' + serverName
+    let dir = '/volume/server/' + appName + '/' + serverName
     fs.removeSync(dir)
     res.sendStatus(200)
   }
@@ -157,7 +169,7 @@ function receiveMessage(apps, req, res) {
   } else if (requestBody.key != apps[appName]) {
     res.sendStatus(403)
   } else {
-    let dir = 'volume/server/' + appName + '/' + serverName
+    let dir = '/volume/server/' + appName + '/' + serverName
     fs.outputFileSync(dir + '/last', JSON.stringify(requestBody))
     fs.outputFileSync(dir + '/' + createdTimestamp, JSON.stringify(requestBody))
     res.sendStatus(200)
@@ -170,7 +182,7 @@ function readLastMessage(apps, req, res) {
   if (!appName || !serverName) {
     res.sendStatus(400)
   } else {
-    res.json(JSON.parse(fs.readFileSync('volume/server/' + appName + '/' + serverName + '/last')))
+    res.json(JSON.parse(fs.readFileSync('/volume/server/' + appName + '/' + serverName + '/last')))
   }
 }
 
@@ -182,14 +194,14 @@ function readIntervalMessage(apps, req, res) {
   if (!appName || !serverName || !from || !to) {
     res.sendStatus(400)
   } else {
-    let result = getInterval('volume/server/' + appName + '/' + serverName, from, to)
+    let result = getInterval('/volume/server/' + appName + '/' + serverName, from, to)
     res.json(result)
   }
 }
 
 function readLastStatus(apps, req, res) {
   console.log('rls - apps', apps)
-  let lastApps = JSON.parse(fs.readFileSync('volume/status/last'))
+  let lastApps = JSON.parse(fs.readFileSync('/volume/status/last'))
   let userApps = getAppsAllowed(req)
   let appsFiltered = {}
   for (let app in userApps) {
@@ -207,7 +219,7 @@ function readIntervalStatus(apps, req, res) {
   if (!from || !to) {
     res.sendStatus(400)
   } else {
-    let result = getInterval('volume/status', from, to)
+    let result = getInterval('/volume/status', from, to)
     res.json(result)
   }
 }
@@ -218,7 +230,7 @@ function readIntervalStatusFixedCount(apps, req, res) {
   if (!from || !count) {
     res.sendStatus(400)
   } else {
-    let result = getIntervalFromCount('volume/status', from, count)
+    let result = getIntervalFromCount('/volume/status', from, count)
     res.json(result)
   }
 }
@@ -243,6 +255,8 @@ function createHttpServer(apps) {
 
   process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0
 
+
+
   // const config = {
   //   "realm": "docker-monitor-health-server",
   //   "bearer-only": true,
@@ -255,7 +269,8 @@ function createHttpServer(apps) {
 
   console.log("Keycloak config: " + JSON.stringify(config))
   let keycloak = new keycloakConnect({ store: memoryStore }, config)
-  expressApp.use(bodyParser.json())
+  expressApp.use(bodyParser.json());
+  expressApp.use(cors());
 
   expressApp.use(keycloak.middleware({
     logout: '/logout',
@@ -299,10 +314,34 @@ function createHttpServer(apps) {
     readIntervalStatusFixedCount(apps, req, res)
   })
 
+
+  expressApp.post('/api/notifications/subscribe', keycloak.protect('real:user') , (req, res) => {
+    const subscription = req.body
+  
+    console.log(subscription)
+  
+    const payload = JSON.stringify({
+      title: 'Hello!',
+      body: 'It works.',
+    })
+  
+    webpush.sendNotification(subscription, payload)
+      .then(result => console.log(result))
+      .catch(e => console.log(e.stack))
+  
+    res.status(200).json({'success': true})
+  });
+
   expressApp.listen(3000, () => {
     console.log('Started at port 3000')
     console.log('novo build')
   })
+
+
+
+
+
+  
 }
 
 function errorCallback(message, error) {
@@ -313,7 +352,7 @@ function errorCallback(message, error) {
 
 function removeAllOldFiles() {
   let expired = new Date().getTime() - (collectDays * 24 * 60 * 60 * 1000)
-  let baseDir = 'volume/server'
+  let baseDir = '/volume/server'
   fs.readdirSync(baseDir, (err, appDirs) => {
     if (appDirs) {
       for (let i = 0; i < appDirs.length; i++) {
@@ -329,7 +368,7 @@ function removeAllOldFiles() {
       }
     }
   })
-  removeOldFiles(expired, 'volume/status')
+  removeOldFiles(expired, '/volume/status')
 }
 
 function removeOldFiles(expired, dir) {
@@ -349,7 +388,7 @@ function removeOldFiles(expired, dir) {
 
 function checkChanges(apps, appStatus) {
   let newAppStatus = {}
-  let baseDir = 'volume/server'
+  let baseDir = '/volume/server'
   Object.keys(apps).forEach(appName => {
     appDir = baseDir + '/' + appName
     let serverDirs = null
@@ -396,8 +435,8 @@ function checkChanges(apps, appStatus) {
     let diff = jsonDiff.diffString(appStatus, newAppStatus)
     let now = new Date().getTime()
     let newAppStatusContent = JSON.stringify(newAppStatus)
-    fs.writeFileSync('volume/status/last', newAppStatusContent)
-    fs.writeFileSync('volume/status/' + now, newAppStatusContent)
+    fs.writeFileSync('/volume/status/last', newAppStatusContent)
+    fs.writeFileSync('/volume/status/' + now, newAppStatusContent)
     console.log('Status of servers has changed:')
     console.log(diff)
     console.log('The following servers have unhealthy containers')
@@ -411,8 +450,8 @@ function checkChanges(apps, appStatus) {
 function main() {
   removeAllOldFiles()
   schedule.scheduleJob('0 0 * * *', removeAllOldFiles)
-  let apps = JSON.parse(fs.readFileSync('volume/apps.json'))
-  let appStatus = JSON.parse(fs.readFileSync('volume/status/last'))
+  let apps = JSON.parse(fs.readFileSync('/volume/apps.json'))
+  let appStatus = JSON.parse(fs.readFileSync('/volume/status/last'))
   schedule.scheduleJob('0,10,20,30,40,50 * * * * *', () => {
     appStatus = checkChanges(apps, appStatus)
   })
