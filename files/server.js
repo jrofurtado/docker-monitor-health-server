@@ -224,6 +224,19 @@ function readIntervalStatus(apps, req, res) {
   }
 }
 
+function subscribe(apps, req, res) {
+  let appName = req.query.appName
+  let serverName = req.query.serverName
+  let email = req.query.email
+  if (!appName || !serverName || !email) {
+    res.sendStatus(400)
+  } else {
+    let dir = '/volume/server/' + appName + '/' + serverName
+    fs.outputFileSync(dir + '/subscribe', email)
+    res.sendStatus(200)
+  }
+}
+
 function readIntervalStatusFixedCount(apps, req, res) {
   let from = req.query.from
   let count = req.query.count
@@ -315,8 +328,16 @@ function createHttpServer(apps) {
   })
 
 
-  expressApp.post('/api/notifications/subscribe', keycloak.protect('real:user') , (req, res) => {
-    const subscription = req.body
+  expressApp.post('/api/notifications/subscribe', (req, res) => {
+    subscribe(apps, req, res)
+  
+    const subscription = {
+      endpoint:  "http://172.17.0.1",
+      keys: {
+        auth: 'eb ca 0f 6d 75 6b e0 2d 1b 7d e9 09 62 fa 1f 33',
+        p256dh: process.env.WEB_PUSH_PUBLIC_VAPID_KEY,
+    }
+    }
   
     console.log(subscription)
   
@@ -324,12 +345,21 @@ function createHttpServer(apps) {
       title: 'Hello!',
       body: 'It works.',
     })
-  
+    
     webpush.sendNotification(subscription, payload)
-      .then(result => console.log(result))
-      .catch(e => console.log(e.stack))
-  
-    res.status(200).json({'success': true})
+      
+    /*
+    .then(result => console.log(result))
+      .catch(e => {
+        console.log(e.stack);
+        
+      })    
+      res.
+
+      res.status(200).json({'success': true})
+
+      return data
+ */ 
   });
 
   expressApp.listen(3000, () => {
