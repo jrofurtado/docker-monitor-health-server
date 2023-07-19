@@ -25,6 +25,7 @@ const keycloakSslRequired = process.env.KEYCLOAK_SSL_REQUIRED
 
 const emailUser = process.env.EMAIL_USER
 const emailPassword = process.env.EMAIL_PASSWORD
+const nodemailer = require('nodemailer')
 
 
 
@@ -248,6 +249,7 @@ function readIntervalStatusFixedCount(apps, req, res) {
   }
 }
 
+
 function createHttpServer(apps) {
   let expressApp = express()
   let memoryStore = new expressSession.MemoryStore()
@@ -328,16 +330,8 @@ function createHttpServer(apps) {
   })
 
 
-  expressApp.post('/api/notifications/subscribe', (req, res) => {
-    subscribe(apps, req, res)
-  
-    const subscription = {
-      endpoint:  "http://172.17.0.1",
-      keys: {
-        auth: 'eb ca 0f 6d 75 6b e0 2d 1b 7d e9 09 62 fa 1f 33',
-        p256dh: process.env.WEB_PUSH_PUBLIC_VAPID_KEY,
-    }
-    }
+  expressApp.post('/api/notifications/subscribe',keycloak.protect('realm:user'), (req, res) => {
+    const subscription = req.body
   
     console.log(subscription)
   
@@ -345,21 +339,12 @@ function createHttpServer(apps) {
       title: 'Hello!',
       body: 'It works.',
     })
-    
+  
     webpush.sendNotification(subscription, payload)
-      
-    /*
-    .then(result => console.log(result))
-      .catch(e => {
-        console.log(e.stack);
-        
-      })    
-      res.
-
-      res.status(200).json({'success': true})
-
-      return data
- */ 
+      .then(result => console.log(result))
+      .catch(e => console.log(e.stack))
+  
+    res.status(200).json({'success': true})
   });
 
   expressApp.listen(3000, () => {
