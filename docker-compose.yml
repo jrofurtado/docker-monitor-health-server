@@ -58,6 +58,10 @@ services:
       KEYCLOAK_SSL_REQUIRED: "none"
       EMAIL_USER: "user"
       EMAIL_PASSWORD: "pass"
+      WEB_PUSH_CONTACT: "mailto:admin@localhost"
+      WEB_PUSH_PUBLIC_VAPID_KEY: "BClE8PGSB-1tCRfeEzwEDxUYOLiGnTNTyENMWVHtqUWx26apiC4suVMKVsRJn-B6H7E5J1b1UTLhy_CvimdNljk"
+      WEB_PUSH_PRIVATE_VAPID_KEY: "T0vsnKfItTqYem_lFQCfHh0cG_KmN0oQfGrzuM6sR0g"
+      WEB_PUSH_ENDPOINT: "https://globaleda-id.duckdns.org"
     volumes:
       - server_data:/volume
     depends_on: 
