@@ -2,7 +2,7 @@ FROM node:8.17.0-alpine3.10
 
 CMD /entrypoint.sh
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD node /healthcheck.js
-RUN mkdir /volume
+RUN mkdir /volume && mkdir /volume/server && mkdir /volume/status
 
 ENV DEFAULT_APPS={}
 ENV COLLECT_DAYS=30
