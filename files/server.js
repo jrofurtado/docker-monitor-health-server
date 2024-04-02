@@ -368,7 +368,8 @@ function errorCallback(message, error) {
 function removeAllOldFiles() {
   let expired = new Date().getTime() - (collectDays * 24 * 60 * 60 * 1000)
   let baseDir = '/volume/server'
-  fs.readdirSync(baseDir, (err, appDirs) => {
+  try {
+    const appDirs = fs.readdirSync(baseDir)
     if (appDirs) {
       for (let i = 0; i < appDirs.length; i++) {
         let appDir = baseDir + '/' + appDirs[i]
@@ -382,12 +383,16 @@ function removeAllOldFiles() {
         })
       }
     }
-  })
+  } catch (error) {
+    errorCallback('Error reading dir', error)
+  } finally {
   removeOldFiles(expired, '/volume/status')
+  }
 }
 
 function removeOldFiles(expired, dir) {
-  fs.readdirSync(dir, (err, files) => {
+  try {
+    const files = fs.readdirSync(dir)
     if (files) {
       for (let k = 0; k < files.length; k++) {
         let file = files[k]
@@ -398,7 +403,10 @@ function removeOldFiles(expired, dir) {
         }
       }
     }
-  })
+  } catch (error) {
+    errorCallback('Error reading dir', error)
+    return
+  }
 }
 
 function checkChanges(apps, appStatus) {
