@@ -187,18 +187,18 @@ function readLastMessage(apps, req, res) {
   }
 }
 
-function readIntervalMessage(apps, req, res) {
-  let appName = req.query.appName
-  let serverName = req.query.serverName
-  let from = req.query.from
-  let to = req.query.to
-  if (!appName || !serverName || !from || !to) {
-    res.sendStatus(400)
-  } else {
-    let result = getInterval('/volume/server/' + appName + '/' + serverName, from, to)
-    res.json(result)
-  }
-}
+// function readIntervalMessage(apps, req, res) {
+//   let appName = req.query.appName
+//   let serverName = req.query.serverName
+//   let from = req.query.from
+//   let to = req.query.to
+//   if (!appName || !serverName || !from || !to) {
+//     res.sendStatus(400)
+//   } else {
+//     let result = getInterval('/volume/server/' + appName + '/' + serverName, from, to)
+//     res.json(result)
+//   }
+// }
 
 function readLastStatus(apps, req, res) {
   console.log('rls - apps', apps)
@@ -270,8 +270,6 @@ function createHttpServer(apps) {
 
   process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0
 
-
-
   // const config = {
   //   "realm": "docker-monitor-health-server",
   //   "bearer-only": true,
@@ -330,21 +328,21 @@ function createHttpServer(apps) {
   })
 
 
-  expressApp.post('/api/notifications/subscribe',keycloak.protect('realm:user'), (req, res) => {
+  expressApp.post('/api/notifications/subscribe', keycloak.protect('realm:user'), (req, res) => {
     const subscription = req.body
-  
+
     console.log(subscription)
-  
+
     const payload = JSON.stringify({
       title: 'Hello!',
       body: 'It works.',
     })
-  
+
     webpush.sendNotification(subscription, payload)
       .then(result => console.log(result))
       .catch(e => console.log(e.stack))
-  
-    res.status(200).json({'success': true})
+
+    res.status(200).json({ 'success': true })
   });
 
   expressApp.listen(3000, () => {
@@ -356,7 +354,7 @@ function createHttpServer(apps) {
 
 
 
-  
+
 }
 
 function errorCallback(message, error) {
@@ -386,7 +384,7 @@ function removeAllOldFiles() {
   } catch (error) {
     errorCallback('Error reading dir', error)
   } finally {
-  removeOldFiles(expired, '/volume/status')
+    removeOldFiles(expired, '/volume/status')
   }
 }
 

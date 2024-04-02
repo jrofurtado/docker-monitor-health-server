@@ -1,5 +1,5 @@
 const fs = require('fs-extra')
-const {getInterval} = require('../helpers/serverStatus')
+const { getInterval } = require('../helpers/serverStatus')
 
 export function readIntervalMessage(apps, req, res) {
   let appName = req.query.appName
@@ -15,8 +15,8 @@ export function readIntervalMessage(apps, req, res) {
 }
 
 export function readIntervalMessageFromApp(appName,from,to) {
-  const baseDir = `volume/server/${appName}`
-  const serversList = fs.readdirSync(baseDir)
+  // const baseDir = `volume/server/${appName}`
+  // const serversList = fs.readdirSync(baseDir)
   let result = getInterval('volume/server/' + appName, from, to)
   return result
 }

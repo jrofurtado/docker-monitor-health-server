@@ -1,6 +1,4 @@
 #Create the "local-le.env" file with the variable DOMAIN set to your hostname
-version: '3'
-
 volumes:
   db_data:
     driver: local
