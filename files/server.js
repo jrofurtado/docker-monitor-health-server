@@ -7,12 +7,10 @@ const http = require('http')
 const fs = require('fs-extra')
 const deepEqual = require('fast-deep-equal')
 const jsonDiff = require('json-diff')
-//const dotenv = require('dotenv')
 const cors = require('cors')
 const webpush = require('web-push')
 const { v1: uuidv1 } = require('uuid');
 require('dotenv').config()
-
 
 const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
 const { readIntervalMessage } = require('./util/messages')
@@ -28,12 +26,7 @@ const emailUser = process.env.EMAIL_USER
 const emailPassword = process.env.EMAIL_PASSWORD
 const nodemailer = require('nodemailer')
 
-
-
-
-
 webpush.setVapidDetails(process.env.WEB_PUSH_CONTACT, process.env.WEB_PUSH_PUBLIC_VAPID_KEY, process.env.WEB_PUSH_PRIVATE_VAPID_KEY)
-
 
 function readApps(apps, req, res) {
   let myApps = {}
@@ -45,6 +38,7 @@ function readApps(apps, req, res) {
     try {
       servers = fs.readdirSync(dir)
     } catch (error) {
+      console.log(error)
     }
     myApps[app] = servers
   }
@@ -214,7 +208,7 @@ function readLastStatus(apps, req, res) {
     res.json(appsFiltered)
   } catch (err) {
     console.log(err)
-    res.sendStatus(500)
+    res.sendStatus(500).json(err)
   }
 }
 
@@ -334,31 +328,20 @@ function createHttpServer(apps) {
 
   expressApp.post('/api/notifications/subscribe', keycloak.protect('realm:user'), (req, res) => {
     const subscription = req.body
-
-    console.log(subscription)
-
     const payload = JSON.stringify({
       title: 'Hello!',
       body: 'It works.',
     })
-
     webpush.sendNotification(subscription, payload)
       .then(result => console.log(result))
       .catch(e => console.log(e.stack))
 
     res.status(200).json({ 'success': true })
   });
-
   expressApp.listen(3000, () => {
     console.log('Started at port 3000')
     console.log('novo build')
   })
-
-
-
-
-
-
 }
 
 function errorCallback(message, error) {
@@ -400,7 +383,7 @@ function removeOldFiles(expired, dir) {
         let file = files[k]
         if ('last' != file && file < expired) {
           let oldFile = dir + '/' + file
-          console.log('Removing old file: ' + oldFile)
+          console.log(`Removing old file: ${oldFile}`)
           fs.removeSync(oldFile)
         }
       }
@@ -479,29 +462,29 @@ function main() {
   try {
     apps = JSON.parse(fs.readFileSync('/volume/apps.json'))
   } catch (error) {
-    console.log('Error reading file /volume/apps.json', error)
+    console.log('Error reading file /volume/apps.json - ', error)
   }
   let appStatus
   try {
     appStatus = JSON.parse(fs.readFileSync('/volume/status/last'))
   } catch (error) {
-    console.log('Error reading file /volume/status/last', error)
+    console.log('Error reading file /volume/status/last - ', error)
   }
   try {
     schedule.scheduleJob('0,10,20,30,40,50 * * * * *', () => {
       try {
         appStatus = checkChanges(apps, appStatus)
       } catch (error) {
-        console.log('Error checking changes', error)
+        console.log('Error checking changes: ', error)
       }
     })
   } catch (error) {
-    console.log('Error scheduling job', error)
+    console.log('Error scheduling job: ', error)
   }
   try {
     createHttpServer(apps)
   } catch (error) {
-    console.log('Error creating http server', error)
+    console.log('Error creating http server: ', error)
   }
 }
 
@@ -510,6 +493,6 @@ try {
   const serversList = fs.readdirSync(baseDir)
   console.log("serversList: ", serversList)
 } catch (error) {
-  console.log('Error reading dir', error)
+  console.log(`Error reading dir: ${baseDir} - ${error}`)
 }
 main()
