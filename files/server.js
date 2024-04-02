@@ -201,17 +201,21 @@ function readLastMessage(apps, req, res) {
 // }
 
 function readLastStatus(apps, req, res) {
-  console.log('rls - apps', apps)
-  let lastApps = JSON.parse(fs.readFileSync('/volume/status/last'))
-  let userApps = getAppsAllowed(req)
-  let appsFiltered = {}
-  for (let app in userApps) {
-    const appName = userApps[app]
-    if (lastApps[appName]) {
-      appsFiltered[appName] = lastApps[appName]
+  try {
+    let lastApps = JSON.parse(fs.readFileSync('/volume/status/last'))
+    let userApps = getAppsAllowed(req)
+    let appsFiltered = {}
+    for (let app in userApps) {
+      const appName = userApps[app]
+      if (lastApps[appName]) {
+        appsFiltered[appName] = lastApps[appName]
+      }
     }
+    res.json(appsFiltered)
+  } catch (err) {
+    console.log(err)
+    res.sendStatus(500)
   }
-  res.json(appsFiltered)
 }
 
 function readIntervalStatus(apps, req, res) {
@@ -471,12 +475,34 @@ function checkChanges(apps, appStatus) {
 function main() {
   removeAllOldFiles()
   schedule.scheduleJob('0 0 * * *', removeAllOldFiles)
-  let apps = JSON.parse(fs.readFileSync('/volume/apps.json'))
-  let appStatus = JSON.parse(fs.readFileSync('/volume/status/last'))
-  schedule.scheduleJob('0,10,20,30,40,50 * * * * *', () => {
-    appStatus = checkChanges(apps, appStatus)
-  })
-  createHttpServer(apps)
+  let apps
+  try {
+    apps = JSON.parse(fs.readFileSync('/volume/apps.json'))
+  } catch (error) {
+    console.log('Error reading file /volume/apps.json', error)
+  }
+  let appStatus
+  try {
+    appStatus = JSON.parse(fs.readFileSync('/volume/status/last'))
+  } catch (error) {
+    console.log('Error reading file /volume/status/last', error)
+  }
+  try {
+    schedule.scheduleJob('0,10,20,30,40,50 * * * * *', () => {
+      try {
+        appStatus = checkChanges(apps, appStatus)
+      } catch (error) {
+        console.log('Error checking changes', error)
+      }
+    })
+  } catch (error) {
+    console.log('Error scheduling job', error)
+  }
+  try {
+    createHttpServer(apps)
+  } catch (error) {
+    console.log('Error creating http server', error)
+  }
 }
 
 const baseDir = `volume/server/monitor`
