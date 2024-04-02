@@ -480,6 +480,10 @@ function main() {
 }
 
 const baseDir = `volume/server/monitor`
-const serversList = fs.readdirSync(baseDir)
-console.log(serversList)
+try {
+  const serversList = fs.readdirSync(baseDir)
+  console.log("serversList: ", serversList)
+} catch (error) {
+  console.log('Error reading dir', error)
+}
 main()
