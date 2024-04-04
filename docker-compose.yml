@@ -61,7 +61,7 @@ services:
       WEB_PUSH_PRIVATE_VAPID_KEY: "T0vsnKfItTqYem_lFQCfHh0cG_KmN0oQfGrzuM6sR0g"
       WEB_PUSH_ENDPOINT: "https://globaleda-id.duckdns.org"
     volumes:
-      - server_data:/volume
+      - server_data:/app/volume
     depends_on: 
       - auth
       - lb
