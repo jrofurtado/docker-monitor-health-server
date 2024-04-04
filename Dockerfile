@@ -3,7 +3,7 @@ FROM node:20.3-bullseye-slim
 WORKDIR /app
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD node ./healthcheck.js
 
-RUN mkdir /app/volume
+RUN mkdir /app/volume && mkdir /app/volume/server && mkdir /app/volume/server/monitor
 
 ENV DEFAULT_APPS={}
 ENV COLLECT_DAYS=30

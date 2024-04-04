@@ -11,6 +11,7 @@ const cors = require('cors')
 const webpush = require('web-push')
 const { v1: uuidv1 } = require('uuid');
 require('dotenv').config()
+const path = require('path')
 
 const { getIntervalFromCount, getInterval } = require('./helpers/serverStatus')
 const { readIntervalMessage } = require('./util/messages')
@@ -333,8 +334,9 @@ function createHttpServer(apps) {
 }
 
 function removeAllOldFiles() {
-  let expired = new Date().getTime() - (collectDays * 24 * 60 * 60 * 1000)
   let baseDir = 'volume/server'
+  if (!fs.existsSync(baseDir)) return
+  let expired = new Date().getTime() - (collectDays * 24 * 60 * 60 * 1000)
   const appDirs = fs.readdirSync(baseDir)
   if (appDirs) {
     for (let i = 0; i < appDirs.length; i++) {
@@ -430,21 +432,12 @@ function checkChanges(apps, appStatus) {
 function main() {
   removeAllOldFiles()
   schedule.scheduleJob('0 0 * * *', removeAllOldFiles)
-  let apps
-  apps = JSON.parse(fs.readFileSync('volume/apps.json'))
-  let appStatus
-  appStatus = JSON.parse(fs.readFileSync('volume/status/last'))
+  let apps = JSON.parse(fs.readFileSync('volume/apps.json'))
+  let appStatus = JSON.parse(fs.readFileSync('volume/status/last'))
   schedule.scheduleJob('0,10,20,30,40,50 * * * * *', () => {
-    try {
-      appStatus = checkChanges(apps, appStatus)
-    } catch (error) {
-      console.log(`Error checking changes: message: ${error.message} stack: ${error.stack}`)
-    }
+    appStatus = checkChanges(apps, appStatus)
   })
   createHttpServer(apps)
 }
 
-const baseDir = `volume/server/monitor`
-const serversList = fs.readdirSync(baseDir)
-console.log("serversList: ", serversList)
 main()
