@@ -187,18 +187,21 @@ function readLastMessage(apps, req, res) {
 // }
 
 function readLastStatus(apps, req, res) {
-  let lastApps = JSON.parse(fs.readFileSync('volume/status/last'))
-  let userApps = getAppsAllowed(req)
-  let appsFiltered = {}
-  for (let app in userApps) {
-    const appName = userApps[app]
-    if (lastApps[appName]) {
-      appsFiltered[appName] = lastApps[appName]
+  try {
+    let lastApps = JSON.parse(fs.readFileSync('volume/status/last'))
+    let userApps = getAppsAllowed(req)
+    let appsFiltered = {}
+    for (let app in userApps) {
+      const appName = userApps[app]
+      if (lastApps[appName]) {
+        appsFiltered[appName] = lastApps[appName]
+      }
     }
+    res.json(appsFiltered)
+  } catch (err) {
+    console.log(err)
+    res.sendStatus(500).json(err)
   }
-  res.json(appsFiltered)
-  console.log(err)
-  res.sendStatus(500).json(err)
 }
 
 function readIntervalStatus(apps, req, res) {
